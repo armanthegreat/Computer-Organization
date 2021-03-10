@@ -7,36 +7,54 @@
     
      #brainf: .string "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.\n" #intializing an 8 bit string
      action: .asciz "r" #string literal for using fopen
-     format: .asciz "%s"
+     format: .asciz "%d"
 
-print:
-     movq      $format,%rdi
-     movq      $0,%rax
-     call      printf
-     ret
+#print:
+    # pushq     %rbp
+     #movq      %rsp,%rbp
+
+    # movq      $format,%rdi
+    # movq      $0,%rax
+    # call      printf
+     #popq      %rbp
+     #ret
 
 fileread: #rdi set to filename in main 
 
-     pushq     %rbp
+     pushq     %rbp #-8
      movq      %rsp, %rbp
 
+     subq      $16,%rsp
      movq      $action, %rsi # reading from file
      call      fopen
-     pushq     %rax
-
-     movq      %rax, %rdi #move the adress of the beggining of the file
+     movq      %rax,-8(%rbp)
+     
+     movq      %rax, %rdi #pointer to the address of the file 
+	movq      $0, %rsi #offset
+	movq      $2, %rdx #seekend
+	call      fseek 
+     
+     
+     movq      -8(%rbp), %rdi #move the adress of the beggining of the file
      call      ftell # find the length of the file
-     pushq     %rax #push the length to the stack 
-
+     movq      %rax,-16(%rbp) #push the length to the stack #-16
+     
+     movq      -8(%rbp), %rdi #pointer to the address of the file 
+	movq      $0, %rsi #offset
+	movq      $0, %rdx #seekend
+	call      fseek 
+     
      movq      $buff,%rdi
      movq      $1,%rsi
-     popq      %rdx
-     popq      %rcx
-     call      fread 
+     movq      -16(%rbp),%rdx
+     movq      -8(%rbp),%rcx
+     call      fread
 
-     movq      %rcx,%rdi
+     movq      -8(%rbp),%rdi
      call      fclose
 
+     popq      %rax
+     movq      %rbp,%rsp
      popq      %rbp
      ret
 
@@ -65,12 +83,8 @@ main:
      
      call      fileread
 
-     #movq      $buff,%r9
-     #leaq      1024(%r9),%rsi
+     movq      %rax,%r9
 
-     #movq      $format,%rdi
-    # movq      $0,%rax
-     #call      printf
 
      movq      $0,%rdi
      call      exit
